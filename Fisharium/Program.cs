@@ -191,10 +191,11 @@ class Fish : Entity
         X += DX;
         Y += DY;
 
+        // Snu fisken når den treffer kanten av akvariet
         if (X <= 0 || X >= Program.Width - Appearance.Length)
         {
             DX = -DX;
-            Appearance = new string(Appearance.Reverse().ToArray());
+            ReverseAppearance();
         }
 
         if (Y <= 1 || Y >= Program.Height - 2)
@@ -202,17 +203,40 @@ class Fish : Entity
             DY = -DY;
         }
 
-        // Bubble logic
+        // Generer bobler
         if (Program.random.Next(100) < 10)
         {
             int bubbleX = DX > 0 ? X + Appearance.Length : X - 1;
-            if (bubbleX > 0 && bubbleX < Program.Width - 1)
+            if (bubbleX >= 0 && bubbleX < Program.Width)
             {
-                Program.bubbles.Add(new Bubble(bubbleX, Y, ConsoleColor.White));
+                Program.bubbles.Add(new Bubble(bubbleX, Y - 1, ConsoleColor.White));
             }
         }
     }
+
+    private void ReverseAppearance()
+    {
+        char[] reversed = new char[Appearance.Length];
+        for (int i = 0; i < Appearance.Length; i++)
+        {
+            char ch = Appearance[Appearance.Length - 1 - i];
+            switch (ch)
+            {
+                case '>':
+                    reversed[i] = '<';
+                    break;
+                case '<':
+                    reversed[i] = '>';
+                    break;
+                default:
+                    reversed[i] = ch;
+                    break;
+            }
+        }
+        Appearance = new string(reversed);
+    }
 }
+
 
 class Plant : Entity
 {
