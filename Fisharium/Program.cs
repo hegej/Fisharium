@@ -1,41 +1,70 @@
 ﻿using System;
 using System.Collections.Generic;
-using System.Linq;
 using System.Threading;
-using Spectre.Console;
 
 class Program
 {
     public static int Width { get; private set; } = 80;
     public static int Height { get; private set; } = 24;
-    static List<Fish> fishes = new List<Fish>();
-    static List<Plant> plants = new List<Plant>();
-    static List<Bubble> bubbles = new List<Bubble>();
-    static Random random = new Random();
+    public static List<Fish> fishes = new List<Fish>();
+    public static List<Plant> plants = new List<Plant>();
+    public static List<Bubble> bubbles = new List<Bubble>();
+    public static Random random = new Random();
     static int fishMoveCounter = 0;
+    static (char Char, ConsoleColor Color)[,] buffer;
 
     static void Main(string[] args)
     {
         Console.CursorVisible = false;
         InitializeAquarium();
+        InitializeBuffer();
 
-        while (true)
+        while (!Console.KeyAvailable)
         {
             UpdateAquarium();
             DrawAquarium();
-            Thread.Sleep(80); // Juster dette for å kontrollere hastigheten på animasjonen
+            RenderBuffer();
+            Thread.Sleep(80);
         }
     }
 
     static void InitializeAquarium()
     {
-        fishes.Add(new Fish(10, 5, 1, 0, "><>", 2));
-        fishes.Add(new Fish(20, 10, -1, 0, "<><", 2));
-        fishes.Add(new Fish(40, 15, 1, 0, "><(((°>", 3));
+        fishes.Add(new Fish(10, 5, 1, 0, "><>", 2, ConsoleColor.Yellow));
+        fishes.Add(new Fish(20, 10, -1, 0, "<><", 2, ConsoleColor.Cyan));
+        fishes.Add(new Fish(40, 15, 1, 0, "><(((*>", 3, ConsoleColor.Magenta));
 
-        plants.Add(new Plant(5, Height - 1, "|^|"));
-        plants.Add(new Plant(15, Height - 1, "|*|"));
-        plants.Add(new Plant(30, Height - 1, "|&|"));
+        plants.Add(new Plant(5, Height - 2, "|^|", ConsoleColor.Green));
+        plants.Add(new Plant(15, Height - 2, "|*|", ConsoleColor.Green));
+        plants.Add(new Plant(30, Height - 2, "|&|", ConsoleColor.Green));
+    }
+
+    static void InitializeBuffer()
+    {
+        buffer = new (char, ConsoleColor)[Height, Width];
+        FillWater();
+    }
+
+    static void FillWater()
+    {
+        for (int y = 0; y < Height; y++)
+        {
+            for (int x = 0; x < Width; x++)
+            {
+                if (y == 1 || y == 2)
+                {
+                    buffer[y, x] = ('~', ConsoleColor.Cyan);
+                }
+                else if (y < Height / 2)
+                {
+                    buffer[y, x] = ('≈', ConsoleColor.Blue);
+                }
+                else
+                {
+                    buffer[y, x] = ('≈', ConsoleColor.DarkBlue);
+                }
+            }
+        }
     }
 
     static void UpdateAquarium()
@@ -46,28 +75,19 @@ class Program
         {
             if (fishMoveCounter % fish.MoveSpeed == 0)
             {
-                fish.Move();
-
-                if (random.Next(100) < 10)
-                {
-                    int bubbleX = fish.DX > 0 ? fish.X + fish.Appearance.Length - 1 : fish.X;
-                    if (bubbleX >= 0 && bubbleX < Width)
-                    {
-                        bubbles.Add(new Bubble(bubbleX, fish.Y));
-                    }
-                }
+                fish.Update();
             }
         }
 
         foreach (var plant in plants)
         {
-            plant.Sway();
+            plant.Update();
         }
 
         for (int i = bubbles.Count - 1; i >= 0; i--)
         {
-            bubbles[i].Rise();
-            if (bubbles[i].Y <= 0)
+            bubbles[i].Update();
+            if (bubbles[i].Y <= 2)
             {
                 bubbles.RemoveAt(i);
             }
@@ -76,133 +96,150 @@ class Program
 
     static void DrawAquarium()
     {
-        Console.SetCursorPosition(0, 0);
+        FillWater();
 
-        var canvas = new Canvas(Width, Height);
-
-        for (int y = 0; y < Height; y++)
-        {
-            for (int x = 0; x < Width; x++)
-            {
-                canvas.SetPixel(x, y, Color.Blue);
-            }
-        }
-
+        // Draw frame
         for (int x = 0; x < Width; x++)
         {
-            canvas.SetPixel(x, 0, Color.White);
-            canvas.SetPixel(x, Height - 1, Color.White);
+            buffer[0, x] = ('-', ConsoleColor.White);
+            buffer[Height - 1, x] = ('-', ConsoleColor.White);
         }
-        for (int y = 0; y < Height; y++)
+        for (int y = 1; y < Height - 1; y++)
         {
-            canvas.SetPixel(0, y, Color.White);
-            canvas.SetPixel(Width - 1, y, Color.White);
+            buffer[y, 0] = ('|', ConsoleColor.White);
+            buffer[y, Width - 1] = ('|', ConsoleColor.White);
         }
 
+        // Draw entities
         foreach (var fish in fishes)
         {
-            DrawEntity(fish, canvas, Color.Orange1);
+            DrawEntity(fish);
         }
 
         foreach (var plant in plants)
         {
-            DrawEntity(plant, canvas, Color.Green);
+            DrawEntity(plant);
         }
 
         foreach (var bubble in bubbles)
         {
-            if (bubble.Y > 0)
-            {
-                DrawEntity(bubble, canvas, Color.White);
-            }
+            DrawEntity(bubble);
         }
-
-        AnsiConsole.Write(canvas);
     }
 
-    static void DrawEntity(Entity entity, Canvas canvas, Color color)
+    static void DrawEntity(Entity entity)
     {
-        int startX = Math.Max(0, entity.X);
-        int endX = Math.Min(Width - 1, entity.X + entity.Appearance.Length);
-        for (int i = startX, j = 0; i < endX; i++, j++)
+        if (entity.Y >= 0 && entity.Y < Height && entity.X >= 0 && entity.X < Width - entity.Appearance.Length)
         {
-            if (entity.Y >= 0 && entity.Y < Height)
+            for (int i = 0; i < entity.Appearance.Length; i++)
             {
-                canvas.SetPixel(i, entity.Y, color);
+                buffer[entity.Y, entity.X + i] = (entity.Appearance[i], entity.Color);
             }
         }
     }
 
-    class Entity
+    static void RenderBuffer()
     {
-        public int X { get; set; }
-        public int Y { get; set; }
-        public string Appearance { get; set; }
-
-        public Entity(int x, int y, string appearance)
+        Console.SetCursorPosition(0, 0);
+        for (int y = 0; y < Height; y++)
         {
-            X = x;
-            Y = y;
-            Appearance = appearance;
+            for (int x = 0; x < Width; x++)
+            {
+                Console.ForegroundColor = buffer[y, x].Color;
+                Console.Write(buffer[y, x].Char);
+            }
+            Console.WriteLine();
         }
     }
+}
 
-    class Fish : Entity
+
+class Entity
+{
+    public int X { get; set; }
+    public int Y { get; set; }
+    public string Appearance { get; set; }
+    public ConsoleColor Color { get; set; }
+
+    public Entity(int x, int y, string appearance, ConsoleColor color)
     {
-        public int DX { get; set; }
-        public int DY { get; set; }
-        public int MoveSpeed { get; set; }
+        X = x;
+        Y = y;
+        Appearance = appearance;
+        Color = color;
+    }
 
-        public Fish(int x, int y, int dx, int dy, string appearance, int moveSpeed) : base(x, y, appearance)
+    public virtual void Update() { }
+}
+
+class Fish : Entity
+{
+    public int DX { get; set; }
+    public int DY { get; set; }
+    public int MoveSpeed { get; set; }
+
+    public Fish(int x, int y, int dx, int dy, string appearance, int moveSpeed, ConsoleColor color)
+        : base(x, y, appearance, color)
+    {
+        DX = dx;
+        DY = dy;
+        MoveSpeed = moveSpeed;
+    }
+
+    public override void Update()
+    {
+        X += DX;
+        Y += DY;
+
+        if (X <= 0 || X >= Program.Width - Appearance.Length)
         {
-            DX = dx;
-            DY = dy;
-            MoveSpeed = moveSpeed;
+            DX = -DX;
+            Appearance = new string(Appearance.Reverse().ToArray());
         }
 
-        public void Move()
+        if (Y <= 1 || Y >= Program.Height - 2)
         {
-            X += DX;
-            Y += DY;
+            DY = -DY;
+        }
 
-            if (X <= 0 || X >= Program.Width - Appearance.Length)
+        // Bubble logic
+        if (Program.random.Next(100) < 10)
+        {
+            int bubbleX = DX > 0 ? X + Appearance.Length : X - 1;
+            if (bubbleX > 0 && bubbleX < Program.Width - 1)
             {
-                DX = -DX;
-                Appearance = new string(Appearance.Reverse().ToArray());
-            }
-
-            if (Y <= 1 || Y >= Program.Height - 2)
-            {
-                DY = -DY;
+                Program.bubbles.Add(new Bubble(bubbleX, Y, ConsoleColor.White));
             }
         }
     }
+}
 
-    class Plant : Entity
+class Plant : Entity
+{
+    private int swayDirection = 1;
+    private int swayCounter = 0;
+
+    public Plant(int x, int y, string appearance, ConsoleColor color)
+        : base(x, y, appearance, color) { }
+
+    public override void Update()
     {
-        private int swayDirection = 1;
-        private int swayCounter = 0;
-
-        public Plant(int x, int y, string appearance) : base(x, y, appearance) { }
-
-        public void Sway()
+        swayCounter++;
+        if (swayCounter % 10 == 0)
         {
-            swayCounter++;
-            if (swayCounter % 10 == 0)
-            {
-                X += swayDirection;
-                swayDirection = -swayDirection;
-            }
+            X += swayDirection;
+            swayDirection = -swayDirection;
         }
     }
+}
 
-    class Bubble : Entity
+class Bubble : Entity
+{
+    public Bubble(int x, int y, ConsoleColor color)
+        : base(x, y, "o", color) { }
+
+    public override void Update()
     {
-        public Bubble(int x, int y) : base(x, y, "o") { }
-
-        public void Rise()
-        {
-            Y--;
-        }
+        Y--;
     }
 }
