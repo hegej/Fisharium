@@ -98,7 +98,6 @@ class Program
     {
         FillWater();
 
-        // Draw frame
         for (int x = 0; x < Width; x++)
         {
             buffer[0, x] = ('-', ConsoleColor.White);
@@ -110,7 +109,6 @@ class Program
             buffer[y, Width - 1] = ('|', ConsoleColor.White);
         }
 
-        // Draw entities
         foreach (var fish in fishes)
         {
             DrawEntity(fish);
@@ -154,7 +152,7 @@ class Program
 }
 
 
-class Entity
+public class Entity
 {
     public int X { get; set; }
     public int Y { get; set; }
@@ -172,11 +170,14 @@ class Entity
     public virtual void Update() { }
 }
 
-class Fish : Entity
+public class Fish : Entity
 {
     public int DX { get; set; }
     public int DY { get; set; }
     public int MoveSpeed { get; set; }
+
+    private int moveCounter = 0;
+    private int moveUpdateRate;
 
     public Fish(int x, int y, int dx, int dy, string appearance, int moveSpeed, ConsoleColor color)
         : base(x, y, appearance, color)
@@ -184,37 +185,62 @@ class Fish : Entity
         DX = dx;
         DY = dy;
         MoveSpeed = moveSpeed;
+        moveUpdateRate = moveSpeed;
     }
 
     public override void Update()
     {
-        int nextX = X + DX; 
+        moveCounter++;
+        if (moveCounter % moveUpdateRate == 0)
+        {
+            RandomizeMovement();
+        }
 
+        int nextX = X + DX;
+        int nextY = Y + DY;
+        CheckBounds(ref nextX, ref nextY);
+        X = nextX;
+        Y = nextY;
+
+        if (Program.random.Next(100) < 20)
+        {
+            int bubbleX = DX > 0 ? X + Appearance.Length - 1 : X;
+            if (bubbleX >= 0 && bubbleX < Program.Width)
+            {
+                Program.bubbles.Add(new Bubble(bubbleX, Y - 1, ConsoleColor.White));
+            }
+        }
+    }
+
+    private void RandomizeMovement()
+    {
+        // Fisk skal aldri svømme baklengs, så DX må alltid være 1 eller -1
+        if (Program.random.Next(2) == 0)
+        {
+            DX = (DX > 0) ? 1 : -1; 
+        }
+
+        // Fisk kan bevege seg vertikalt opp, ned eller ingen vertikal bevegelse
+        if (Program.random.Next(2) == 0)
+        {
+            DY = Program.random.Next(-1, 2); 
+        }
+    }
+
+    private void CheckBounds(ref int nextX, ref int nextY)
+    {
+        // Snu fisken før den treffer kanten av akvariet
         if (nextX <= 0 || nextX >= Program.Width - Appearance.Length)
         {
             DX = -DX;
             ReverseAppearance();
-            nextX = X + DX; 
+            nextX = X + DX;
         }
 
-        X = nextX;
-
-        int nextY = Y + DY;
         if (nextY <= 1 || nextY >= Program.Height - 1)
         {
-            DY = -DY;
-            nextY = Y + DY;
-        }
-
-        Y = nextY;
-
-        if (Program.random.Next(100) < 30)
-        {
-            int bubbleX = DX > 0 ? X + Appearance.Length - 1 : X;
-            if (bubbleX > 0 && bubbleX < Program.Width)
-            {
-                Program.bubbles.Add(new Bubble(bubbleX, Y - 1, ConsoleColor.White));
-            }
+            DY = -DY;  
+            nextY = Y + DY;  
         }
     }
 
@@ -224,23 +250,11 @@ class Fish : Entity
         for (int i = 0; i < Appearance.Length; i++)
         {
             char ch = Appearance[Appearance.Length - 1 - i];
-            switch (ch)
-            {
-                case '>':
-                    reversed[i] = '<';
-                    break;
-                case '<':
-                    reversed[i] = '>';
-                    break;
-                default:
-                    reversed[i] = ch;
-                    break;
-            }
+            reversed[i] = ch == '>' ? '<' : (ch == '<' ? '>' : ch);
         }
         Appearance = new string(reversed);
     }
 }
-
 
 class Plant : Entity
 {
