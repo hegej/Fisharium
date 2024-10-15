@@ -188,26 +188,30 @@ class Fish : Entity
 
     public override void Update()
     {
-        X += DX;
-        Y += DY;
+        int nextX = X + DX; 
 
-        // Snu fisken når den treffer kanten av akvariet
-        if (X <= 0 || X >= Program.Width - Appearance.Length)
+        if (nextX <= 0 || nextX >= Program.Width - Appearance.Length)
         {
             DX = -DX;
             ReverseAppearance();
+            nextX = X + DX; 
         }
 
-        if (Y <= 1 || Y >= Program.Height - 2)
+        X = nextX;
+
+        int nextY = Y + DY;
+        if (nextY <= 1 || nextY >= Program.Height - 1)
         {
             DY = -DY;
+            nextY = Y + DY;
         }
 
-        // Generer bobler
-        if (Program.random.Next(100) < 10)
+        Y = nextY;
+
+        if (Program.random.Next(100) < 30)
         {
-            int bubbleX = DX > 0 ? X + Appearance.Length : X - 1;
-            if (bubbleX >= 0 && bubbleX < Program.Width)
+            int bubbleX = DX > 0 ? X + Appearance.Length - 1 : X;
+            if (bubbleX > 0 && bubbleX < Program.Width)
             {
                 Program.bubbles.Add(new Bubble(bubbleX, Y - 1, ConsoleColor.White));
             }
