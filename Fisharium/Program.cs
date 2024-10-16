@@ -202,7 +202,7 @@ public class Fish : Entity
         X = nextX;
         Y = nextY;
 
-        if (Program.random.Next(100) < 20)
+        if (Program.random.Next(100) < 25)
         {
             int bubbleX = DX > 0 ? X + Appearance.Length - 1 : X;
             if (bubbleX >= 0 && bubbleX < Program.Width)
