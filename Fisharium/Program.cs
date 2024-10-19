@@ -202,7 +202,7 @@ public class Fish : Entity
         X = nextX;
         Y = nextY;
 
-        if (Program.random.Next(100) < 25)
+        if (Program.random.Next(100) < 30)
         {
             int bubbleX = DX > 0 ? X + Appearance.Length - 1 : X;
             if (bubbleX >= 0 && bubbleX < Program.Width)
@@ -229,7 +229,7 @@ public class Fish : Entity
 
     private void CheckBounds(ref int nextX, ref int nextY)
     {
-        // Snu fisken før den treffer kanten av akvariet
+        // Snu fisken før den treffer kanten på akvariet
         if (nextX <= 0 || nextX >= Program.Width - Appearance.Length)
         {
             DX = -DX;
