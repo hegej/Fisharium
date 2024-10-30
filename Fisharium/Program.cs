@@ -146,11 +146,23 @@ class Program
 
     static void DrawEntity(Entity entity)
     {
-        if (entity.Y >= 0 && entity.Y < Height && entity.X >= 0 && entity.X < Width - entity.Appearance.Length)
+        int startY = entity.Y;
+        string[] lines = entity.Appearance.Split('\n');
+
+        for (int y = 0; y < lines.Length; y++)
         {
-            for (int i = 0; i < entity.Appearance.Length; i++)
+            string line = lines[y];
+            for (int x = 0; x < line.Length; x++)
             {
-                buffer[entity.Y, entity.X + i] = (entity.Appearance[i], entity.Color);
+                char currentChar = line[x];
+                if (currentChar != ' ') 
+                {
+                    ConsoleColor color = entity.GetColorForChar(currentChar);
+                    if (entity.Y + y < Height && entity.X + x < Width)
+                    {
+                        buffer[entity.Y + y, entity.X + x] = (currentChar, color);
+                    }
+                }
             }
         }
     }
