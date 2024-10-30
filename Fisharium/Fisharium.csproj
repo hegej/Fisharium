@@ -11,4 +11,9 @@
     <PackageReference Include="Spectre.Console" Version="0.49.1" />
   </ItemGroup>
 
+  <ItemGroup>
+    <Folder Include="Entities\" />
+    <Folder Include="Factories\" />
+  </ItemGroup>
+
 </Project>

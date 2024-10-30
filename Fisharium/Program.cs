@@ -4,8 +4,8 @@ using System.Threading;
 
 class Program
 {
-    public static int Width { get; private set; } = 80;
-    public static int Height { get; private set; } = 24;
+    public static int Width { get; private set; } = 160;
+    public static int Height { get; private set; } = 50;
     public static List<Fish> fishes = new List<Fish>();
     public static List<Plant> plants = new List<Plant>();
     public static List<Bubble> bubbles = new List<Bubble>();
@@ -15,6 +15,14 @@ class Program
 
     static void Main(string[] args)
     {
+        //int windowWidth = Width + 200;
+        //int windowHeight = Height + 100; 
+
+        Console.SetWindowSize(200, 100);
+        Console.SetBufferSize(200, 100);
+
+        //Console.SetWindowSize(windowWidth, windowHeight);
+        //Console.SetBufferSize(windowWidth, windowHeight);
         Console.CursorVisible = false;
         InitializeAquarium();
         InitializeBuffer();
@@ -30,9 +38,20 @@ class Program
 
     static void InitializeAquarium()
     {
-        fishes.Add(new Fish(10, 5, 1, 0, "><>", 2, ConsoleColor.Yellow));
+        fishes.Add(new Fish(10, 5, 1, 0, @"
+         ,       
+      .:/    
+   ,,///;,   ,;/ 
+ o)::::::;;///
+>::::::::;;\\\ 
+  ''\\\\\'"" ';\ 
+     ';", 2, ConsoleColor.Gray));
+
         fishes.Add(new Fish(20, 10, -1, 0, "<><", 2, ConsoleColor.Cyan));
         fishes.Add(new Fish(40, 15, 1, 0, "><(((*>", 3, ConsoleColor.Magenta));
+        fishes.Add(new Fish(50, 7, -1, 0, "<°((><", 3, ConsoleColor.Green));
+        fishes.Add(new Fish(60, 12, 1, 0, "><>", 4, ConsoleColor.Red));
+        fishes.Add(new Fish(30, 20, 1, 0, "<><><>", 2, ConsoleColor.Blue));
 
         plants.Add(new Plant(5, Height - 2, "|^|", ConsoleColor.Green));
         plants.Add(new Plant(15, Height - 2, "|*|", ConsoleColor.Green));
@@ -139,6 +158,7 @@ class Program
     static void RenderBuffer()
     {
         Console.SetCursorPosition(0, 0);
+
         for (int y = 0; y < Height; y++)
         {
             for (int x = 0; x < Width; x++)
@@ -146,6 +166,7 @@ class Program
                 Console.ForegroundColor = buffer[y, x].Color;
                 Console.Write(buffer[y, x].Char);
             }
+
             Console.WriteLine();
         }
     }
