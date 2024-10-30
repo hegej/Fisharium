@@ -1,12 +1,25 @@
-﻿using System;
-using System.Collections.Generic;
-using System.Linq;
-using System.Text;
-using System.Threading.Tasks;
-
+﻿
 namespace Fisharium.Entities
 {
-    internal class Plant
+    public class Plant : Entity
     {
+        private int swayCounter = 0;
+        private int swayDirection = 1;
+
+        public Plant(int x, int y, string appearance, ConsoleColor color)
+            : base( x, y, appearance, color)
+        {
+
+        }
+
+        public override void Update()
+        {
+            swayCounter++;
+            if (swayCounter % 10 == 0)
+            {
+                X += swayDirection;
+                swayDirection = -swayDirection;
+            }
+        }
     }
 }

@@ -3,8 +3,8 @@ namespace Fisharium.Entities
 {
     public abstract class Entity
     {
-        int X { get; set; }
-        int Y { get; set; }
+        protected int X { get; set; }
+        protected int Y { get; set; }
         public string Appearance { get; set; }
         public ConsoleColor Color { get; set; }
 
@@ -17,7 +17,7 @@ namespace Fisharium.Entities
             Color = color;
         }
 
-        public abstract void Update();
+        public virtual void Update() { }
 
         public virtual void DrawEntity((char Char, ConsoleColor Color)[,] buffer)
         {
@@ -29,6 +29,5 @@ namespace Fisharium.Entities
                 }
             }
         }
-
     }
 }
