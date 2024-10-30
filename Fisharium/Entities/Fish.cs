@@ -37,7 +37,7 @@ namespace Fisharium.Entities
             X = nextX;
             Y = nextY;
 
-            // Boble front of the fish
+            // Bubble front of the fish
             if (Program.random.Next(100) < 30)
             {
                 int bubbleX = DX > 0 ? X + Appearance.Length - 1 : X;
@@ -46,6 +46,21 @@ namespace Fisharium.Entities
                     Program.bubbles.Add(new Bubble(bubbleX, Y, ConsoleColor.White));
                 }
             }
+        }
+
+        public ConsoleColor GetColorForChar(char character)
+        {
+            
+            return character switch
+            {
+                'o' => ConsoleColor.Green,
+                ',' => ConsoleColor.Green,
+                '/' => ConsoleColor.Magenta,
+                '>' => ConsoleColor.Red,
+                ':' => ConsoleColor.Magenta,
+                ';' => ConsoleColor.DarkYellow,
+                _ => Color
+            };
         }
 
         private void RandomizeMovement()
