@@ -1,4 +1,6 @@
 ﻿
+using System;
+
 namespace Fisharium.Entities
 {
     public class Fish : Entity
@@ -103,27 +105,48 @@ namespace Fisharium.Entities
         public override void DrawEntity((char Char, ConsoleColor Color)[,] buffer)
         {
             string[] lines = Appearance.Split('\n');
+            bool isType4Fish = Appearance.Contains("/`-._"); 
+
             for (int y = 0; y < lines.Length; y++)
             {
                 string line = lines[y].TrimEnd();
                 int colorStart = DX > 0 ? 0 : ColorPattern.Length - 1;
                 int colorDirection = DX > 0 ? 1 : -1;
 
+                bool insideFishSection = false;
                 for (int x = 0; x < line.Length; x++)
                 {
                     if (Y + y >= 0 && Y + y < buffer.GetLength(0) &&
                         X + x >= 0 && X + x < buffer.GetLength(1))
                     {
                         char currentChar = line[x];
+
+                        if (isType4Fish)
+                        {
+                            if (currentChar == '/' || currentChar == '\\' || currentChar == '`' ||
+                                currentChar == '\'' || currentChar == ':' || currentChar == '{' ||
+                                currentChar == '}' || currentChar == '(' || currentChar == ')')
+                            {
+                                insideFishSection = !insideFishSection;
+                            }
+                        }
+
                         if (char.IsWhiteSpace(currentChar))
                         {
-                            if (Y + y < buffer.GetLength(0) / 2)
+                            if (isType4Fish && insideFishSection)
                             {
-                                buffer[Y + y, X + x] = ('≈', ConsoleColor.Blue);
+                                buffer[Y + y, X + x] = ('·', ConsoleColor.DarkGray);
                             }
                             else
                             {
-                                buffer[Y + y, X + x] = ('≈', ConsoleColor.DarkBlue);
+                                if (Y + y < buffer.GetLength(0) / 2)
+                                {
+                                    buffer[Y + y, X + x] = ('≈', ConsoleColor.Blue);
+                                }
+                                else
+                                {
+                                    buffer[Y + y, X + x] = ('≈', ConsoleColor.DarkBlue);
+                                }
                             }
                         }
                         else
@@ -140,6 +163,57 @@ namespace Fisharium.Entities
                     }
                 }
             }
+        }
+
+        private bool IsInsideFish(int x, int y, string[] lines)
+        {
+            if (y >= lines.Length || y < 0) return false;
+
+            string currentLine = lines[y];
+            bool foundLeftBoundary = false;
+            bool foundRightBoundary = false;
+
+            for (int i = 0; i < x; i++)
+            {
+                char c = currentLine[i];
+                if (IsOuterChar(c))
+                {
+                    foundLeftBoundary = true;
+                    break;
+                }
+            }
+
+            for (int i = x + 1; i < currentLine.Length; i++)
+            {
+                char c = currentLine[i];
+                if (IsOuterChar(c))
+                {
+                    foundRightBoundary = true;
+                    break;
+                }
+            }
+
+            return foundLeftBoundary && foundRightBoundary;
+        }
+
+        private bool IsOuterChar(char c)
+        {
+            return c switch
+            {
+                '/' => true,
+                '\\' => true,
+                '`' => true,
+                '\'' => true,
+                ':' => true,
+                '{' => true,
+                '}' => true,
+                '(' => true,
+                ')' => true,
+                '_' => true,
+                '-' => true,
+                '.' => true,
+                _ => false
+            };
         }
 
         private void ReverseAppearance()
