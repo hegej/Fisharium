@@ -1,6 +1,6 @@
-﻿using System;
-using System.Collections.Generic;
-using System.Threading;
+﻿using Fisharium.Entities;
+using Fisharium.Factories;
+using System.Text;
 
 class Program
 {
@@ -15,15 +15,10 @@ class Program
 
     static void Main(string[] args)
     {
-        //int windowWidth = Width + 200;
-        //int windowHeight = Height + 100; 
-
         Console.SetWindowSize(200, 100);
         Console.SetBufferSize(200, 100);
-
-        //Console.SetWindowSize(windowWidth, windowHeight);
-        //Console.SetBufferSize(windowWidth, windowHeight);
         Console.CursorVisible = false;
+
         InitializeAquarium();
         InitializeBuffer();
 
@@ -32,26 +27,15 @@ class Program
             UpdateAquarium();
             DrawAquarium();
             RenderBuffer();
-            Thread.Sleep(80);
+            Thread.Sleep(5);
         }
     }
 
     static void InitializeAquarium()
     {
-        fishes.Add(new Fish(10, 5, 1, 0, @"
-         ,       
-      .:/    
-   ,,///;,   ,;/ 
- o)::::::;;///
->::::::::;;\\\ 
-  ''\\\\\'"" ';\ 
-     ';", 2, ConsoleColor.Gray));
-
-        fishes.Add(new Fish(20, 10, -1, 0, "<><", 2, ConsoleColor.Cyan));
-        fishes.Add(new Fish(40, 15, 1, 0, "><(((*>", 3, ConsoleColor.Magenta));
-        fishes.Add(new Fish(50, 7, -1, 0, "<°((><", 3, ConsoleColor.Green));
-        fishes.Add(new Fish(60, 12, 1, 0, "><>", 4, ConsoleColor.Red));
-        fishes.Add(new Fish(30, 20, 1, 0, "<><><>", 2, ConsoleColor.Blue));
+        fishes.Add(FishFactory.CreateFishType1(10, 5));
+        fishes.Add(FishFactory.CreateFishType2(40, 10));
+        fishes.Add(FishFactory.CreateFishType3(60, 15));
 
         plants.Add(new Plant(5, Height - 2, "|^|", ConsoleColor.Green));
         plants.Add(new Plant(15, Height - 2, "|*|", ConsoleColor.Green));
@@ -106,7 +90,7 @@ class Program
         for (int i = bubbles.Count - 1; i >= 0; i--)
         {
             bubbles[i].Update();
-            if (bubbles[i].Y <= 2)
+            if (bubbles[i].IsOutOfBounds)
             {
                 bubbles.RemoveAt(i);
             }
@@ -117,6 +101,7 @@ class Program
     {
         FillWater();
 
+        // Tegn rammen
         for (int x = 0; x < Width; x++)
         {
             buffer[0, x] = ('-', ConsoleColor.White);
@@ -128,193 +113,31 @@ class Program
             buffer[y, Width - 1] = ('|', ConsoleColor.White);
         }
 
-        foreach (var fish in fishes)
+        // La hver entitet tegne seg selv
+        foreach (var entity in fishes.Concat<Entity>(plants).Concat(bubbles))
         {
-            DrawEntity(fish);
-        }
-
-        foreach (var plant in plants)
-        {
-            DrawEntity(plant);
-        }
-
-        foreach (var bubble in bubbles)
-        {
-            DrawEntity(bubble);
-        }
-    }
-
-    static void DrawEntity(Entity entity)
-    {
-        int startY = entity.Y;
-        string[] lines = entity.Appearance.Split('\n');
-
-        for (int y = 0; y < lines.Length; y++)
-        {
-            string line = lines[y];
-            for (int x = 0; x < line.Length; x++)
-            {
-                char currentChar = line[x];
-                if (currentChar != ' ') 
-                {
-                    ConsoleColor color = entity.GetColorForChar(currentChar);
-                    if (entity.Y + y < Height && entity.X + x < Width)
-                    {
-                        buffer[entity.Y + y, entity.X + x] = (currentChar, color);
-                    }
-                }
-            }
+            entity.DrawEntity(buffer);
         }
     }
 
     static void RenderBuffer()
     {
         Console.SetCursorPosition(0, 0);
+        ConsoleColor currentColor = ConsoleColor.White;
 
         for (int y = 0; y < Height; y++)
         {
             for (int x = 0; x < Width; x++)
             {
-                Console.ForegroundColor = buffer[y, x].Color;
-                Console.Write(buffer[y, x].Char);
+                var cell = buffer[y, x];
+                if (currentColor != cell.Color)
+                {
+                    Console.ForegroundColor = cell.Color;
+                    currentColor = cell.Color;
+                }
+                Console.Write(cell.Char);
             }
-
             Console.WriteLine();
         }
-    }
-}
-
-
-public class Entity
-{
-    public int X { get; set; }
-    public int Y { get; set; }
-    public string Appearance { get; set; }
-    public ConsoleColor Color { get; set; }
-
-    public Entity(int x, int y, string appearance, ConsoleColor color)
-    {
-        X = x;
-        Y = y;
-        Appearance = appearance;
-        Color = color;
-    }
-
-    public virtual void Update() { }
-}
-
-public class Fish : Entity
-{
-    public int DX { get; set; }
-    public int DY { get; set; }
-    public int MoveSpeed { get; set; }
-
-    private int moveCounter = 0;
-    private int moveUpdateRate;
-
-    public Fish(int x, int y, int dx, int dy, string appearance, int moveSpeed, ConsoleColor color)
-        : base(x, y, appearance, color)
-    {
-        DX = dx;
-        DY = dy;
-        MoveSpeed = moveSpeed;
-        moveUpdateRate = moveSpeed;
-    }
-
-    public override void Update()
-    {
-        moveCounter++;
-        if (moveCounter % moveUpdateRate == 0)
-        {
-            RandomizeMovement();
-        }
-
-        int nextX = X + DX;
-        int nextY = Y + DY;
-        CheckBounds(ref nextX, ref nextY);
-        X = nextX;
-        Y = nextY;
-
-        if (Program.random.Next(100) < 30)
-        {
-            int bubbleX = DX > 0 ? X + Appearance.Length - 1 : X;
-            if (bubbleX >= 0 && bubbleX < Program.Width)
-            {
-                Program.bubbles.Add(new Bubble(bubbleX, Y - 1, ConsoleColor.White));
-            }
-        }
-    }
-
-    private void RandomizeMovement()
-    {
-        // Fisk skal aldri svømme baklengs, så DX må alltid være 1 eller -1
-        if (Program.random.Next(2) == 0)
-        {
-            DX = (DX > 0) ? 1 : -1; 
-        }
-
-        // Fisk kan bevege seg vertikalt opp, ned eller ingen vertikal bevegelse
-        if (Program.random.Next(2) == 0)
-        {
-            DY = Program.random.Next(-1, 2); 
-        }
-    }
-
-    private void CheckBounds(ref int nextX, ref int nextY)
-    {
-        // Snu fisken før den treffer kanten på akvariet
-        if (nextX <= 0 || nextX >= Program.Width - Appearance.Length)
-        {
-            DX = -DX;
-            ReverseAppearance();
-            nextX = X + DX;
-        }
-
-        if (nextY <= 1 || nextY >= Program.Height - 1)
-        {
-            DY = -DY;  
-            nextY = Y + DY;  
-        }
-    }
-
-    private void ReverseAppearance()
-    {
-        char[] reversed = new char[Appearance.Length];
-        for (int i = 0; i < Appearance.Length; i++)
-        {
-            char ch = Appearance[Appearance.Length - 1 - i];
-            reversed[i] = ch == '>' ? '<' : (ch == '<' ? '>' : ch);
-        }
-        Appearance = new string(reversed);
-    }
-}
-
-class Plant : Entity
-{
-    private int swayDirection = 1;
-    private int swayCounter = 0;
-
-    public Plant(int x, int y, string appearance, ConsoleColor color)
-        : base(x, y, appearance, color) { }
-
-    public override void Update()
-    {
-        swayCounter++;
-        if (swayCounter % 10 == 0)
-        {
-            X += swayDirection;
-            swayDirection = -swayDirection;
-        }
-    }
-}
-
-class Bubble : Entity
-{
-    public Bubble(int x, int y, ConsoleColor color)
-        : base(x, y, "o", color) { }
-
-    public override void Update()
-    {
-        Y--;
     }
 }
