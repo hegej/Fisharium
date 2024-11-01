@@ -43,20 +43,16 @@ namespace Fisharium.Entities
                 RandomizeMovement();
             }
 
-            // Økt hastighetsmultiplikatorene
             double targetVelocityX = DX * (MoveSpeed * SPEED_MULTIPLIER);
             double targetVelocityY = DY * (MoveSpeed * SPEED_MULTIPLIER * 0.5);
 
-            // Raskere hastighetsendringer
             velocityX = velocityX * MOVEMENT_SMOOTHING + targetVelocityX * (1 - MOVEMENT_SMOOTHING);
             velocityY = velocityY * MOVEMENT_SMOOTHING + targetVelocityY * (1 - MOVEMENT_SMOOTHING);
 
-            // Oppdater posisjon med bølgebevegelse
             verticalOffset += WAVE_SPEED;
             double waveMotion = Math.Sin(verticalOffset) * WAVE_AMPLITUDE * MoveSpeed;
 
-            // Økt bevegelseshastighet
-            actualX += velocityX * 0.3;  // Juster denne faktoren for å kontrollere hastigheten
+            actualX += velocityX * 0.3;
             actualY += (velocityY + waveMotion) * 0.3;
 
             X = (int)Math.Round(actualX);
@@ -64,8 +60,7 @@ namespace Fisharium.Entities
 
             CheckBounds(ref actualX, ref actualY);
 
-            // Boble-generering
-            if (random.Next(100) < 20) // Redusert sannsynlighet for bobler
+            if (random.Next(100) < 20)
             {
                 int bubbleX;
                 if (IsMultiLine)
@@ -111,7 +106,6 @@ namespace Fisharium.Entities
             for (int y = 0; y < lines.Length; y++)
             {
                 string line = lines[y].TrimEnd();
-                // Bestem retningen og start-posisjon for fargemønsteret
                 int colorStart = DX > 0 ? 0 : ColorPattern.Length - 1;
                 int colorDirection = DX > 0 ? 1 : -1;
 
@@ -137,7 +131,6 @@ namespace Fisharium.Entities
                             ConsoleColor charColor = GetColorForChar(currentChar);
                             if (charColor == Color)
                             {
-                                // Beregn fargeindeks basert på retning
                                 int colorIndex = (colorStart + (x * colorDirection)) % ColorPattern.Length;
                                 if (colorIndex < 0) colorIndex += ColorPattern.Length;
                                 charColor = ColorPattern[colorIndex];
@@ -155,14 +148,11 @@ namespace Fisharium.Entities
             {
                 string[] lines = Appearance.Split('\n');
                 string[] reversedLines = new string[lines.Length];
-
-                // Finn maksimal linjelengde og pad alle linjer til samme lengde
                 int maxLength = lines.Max(line => line.TrimEnd().Length);
 
                 for (int i = 0; i < lines.Length; i++)
                 {
                     string trimmedLine = lines[i].TrimEnd();
-                    // Pad linjen med mellomrom til maksimal lengde
                     string paddedLine = trimmedLine.PadRight(maxLength);
 
                     char[] reversed = new char[maxLength];
@@ -186,16 +176,16 @@ namespace Fisharium.Entities
                             _ => ch
                         };
                     }
-                    // Trim bort eventuelle mellomrom på slutten før vi lagrer
+
                     reversedLines[i] = new string(reversed).TrimEnd();
                 }
 
-                // Behold original formatering med linjeskift
+
                 Appearance = string.Join("\n", reversedLines);
             }
             else
             {
-                // Original håndtering for enkle fisker
+
                 char[] reversed = new char[Appearance.Length];
                 for (int i = 0; i < Appearance.Length; i++)
                 {
@@ -208,13 +198,13 @@ namespace Fisharium.Entities
 
         private void RandomizeMovement()
         {
-            // Reduser frekvensen av retningsendringer for jevnere bevegelse
-            if (random.Next(15) == 0)  // Økt fra 8 til 15
+
+            if (random.Next(15) == 0) 
             {
                 DX = (DX > 0) ? 1 : -1;
             }
 
-            if (random.Next(8) == 0)  // Økt fra 4 til 8
+            if (random.Next(8) == 0) 
             {
                 DY = Math.Sign(DY + (random.NextDouble() - 0.5) * 0.8);
             }
@@ -229,7 +219,7 @@ namespace Fisharium.Entities
                 Appearance.Split('\n').Length :
                 1;
 
-            // Mykere kant-håndtering
+
             if (nextX <= 2)
             {
                 DX = 1;
@@ -243,7 +233,6 @@ namespace Fisharium.Entities
                 nextX = Program.Width - maxWidth - 2;
             }
 
-            // Mykere vertikal grensehåndtering
             if (nextY <= 2)
             {
                 DY = Math.Abs(DY);

@@ -36,6 +36,7 @@ class Program
         fishes.Add(FishFactory.CreateFishType1(10, 5));
         fishes.Add(FishFactory.CreateFishType2(40, 10));
         fishes.Add(FishFactory.CreateFishType3(60, 15));
+        fishes.Add(FishFactory.CreateFishType4(30, 20));
 
         plants.Add(new Plant(5, Height - 2, "|^|", ConsoleColor.Green));
         plants.Add(new Plant(15, Height - 2, "|*|", ConsoleColor.Green));
@@ -101,7 +102,6 @@ class Program
     {
         FillWater();
 
-        // Tegn rammen
         for (int x = 0; x < Width; x++)
         {
             buffer[0, x] = ('-', ConsoleColor.White);
@@ -113,7 +113,6 @@ class Program
             buffer[y, Width - 1] = ('|', ConsoleColor.White);
         }
 
-        // La hver entitet tegne seg selv
         foreach (var entity in fishes.Concat<Entity>(plants).Concat(bubbles))
         {
             entity.DrawEntity(buffer);

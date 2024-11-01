@@ -40,5 +40,24 @@ namespace Fisharium.Factories
             ConsoleColor[] colorPattern = { ConsoleColor.Magenta, ConsoleColor.Gray };
             return new Fish(x, y, appearance, 1, 0, 3, colorPattern);
         }
+
+        public static Fish CreateFishType4(int x, int y)
+        {
+            string appearance = @"
+       /`-._
+     /_,.._`:-        
+ ,.-'·······`:..-')   
+:·o·):';······_··{   
+ `-._ `'__,.-'\`-.)
+     `\\  \,.-'`";
+            ConsoleColor[] colorPattern = {
+                ConsoleColor.DarkYellow,
+                ConsoleColor.Yellow,
+                ConsoleColor.DarkCyan,
+                ConsoleColor.Cyan,
+                 ConsoleColor.Blue
+            };
+            return new Fish(x, y, appearance, -1, 0, 12, colorPattern);
+        }
     }
 }
